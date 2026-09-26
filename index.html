@@ -124,6 +124,9 @@
             <button onclick="resetAll()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer hover:text-red-400">
                 <i class="fa-solid fa-rotate-right mr-2"></i> 重置
             </button>
+            <button onclick="openSettingsModal()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-[#fff0f5] hover:text-pink-500 transition-colors shadow-sm cursor-pointer border border-transparent hover:border-pink-200">
+                <i class="fa-solid fa-gear mr-2"></i> 設定
+            </button>
         </div>
 
         <!-- 自動排程子選單 -->
@@ -179,6 +182,51 @@
             </div>
         </div>
     </footer>
+
+    <!-- 回到最頂端按鈕 -->
+    <div class="w-full max-w-3xl flex justify-center mb-10">
+        <button onclick="scrollToTop()" class="glass-panel px-6 py-3 rounded-full text-sm font-medium text-[#795548] hover:text-[#d81b60] hover:bg-white transition-all shadow-sm hover:shadow-md flex items-center gap-2 group cursor-pointer border border-pink-100">
+            <i class="fa-solid fa-arrow-up group-hover:-translate-y-1 transition-transform text-[#e57373]"></i>
+            回到最上面
+        </button>
+    </div>
+
+    <!-- 學習內容設定模態框 (Modal) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="glass-panel bg-white/95 max-w-2xl w-full rounded-3xl p-6 shadow-2xl max-h-[90vh] flex flex-col border border-pink-100">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-full bg-pink-100 text-pink-500 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-[#5d4037]">自訂學習主題與項目</h3>
+                        <p class="text-xs text-gray-400">更換三大主題名稱與自訂子項目清單</p>
+                    </div>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 可滾動設定清單 -->
+            <div id="settings-modal-body" class="overflow-y-auto space-y-6 pr-1 flex-1">
+                <!-- 設定表單內容由 JS 動態生成 -->
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 mt-4 flex flex-wrap justify-between items-center gap-3">
+                <button onclick="resetDefaultCourses()" class="px-4 py-2 text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> 恢復原圖預設主題
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">取消</button>
+                    <button onclick="saveSettings()" class="px-5 py-2 rounded-xl text-sm font-medium bg-pink-500 text-white hover:bg-pink-600 shadow-md hover:shadow-lg transition-all flex items-center">
+                        <i class="fa-solid fa-check mr-1.5"></i> 儲存變更
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 隱藏的按鈕，用於強制初始化音訊 -->
     <button id="init-audio-btn" class="hidden">初始化音訊</button>
@@ -327,6 +375,218 @@
             }, 1000);
         }
         // --- 結束音效系統設定 ---
+
+        // 平滑滾動回到頂部
+        function scrollToTop() {
+            initAudio();
+            playClickSound();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // 預設三大主題範本 (供重置使用)
+        const defaultCourseTemplate = [
+            {
+                id: 'cat-1',
+                title: '英文',
+                number: '1',
+                themeClass: 'bg-[#faebeb]',
+                headerColor: 'bg-[#e57373]',
+                quote: 'Small steps every day,\nbig results one day.',
+                tasks: [
+                    { id: 't1-1', name: '肯定句英文 Speak', startTime: '', endTime: '', icon: 'fa-comment-dots', iconColor: 'text-blue-400', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't1-2', name: '林熙 - 24 天英語口說', startTime: '', endTime: '', icon: 'fa-play-circle', iconColor: 'text-pink-400', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't1-3', name: '抄寫英語的奇蹟', startTime: '', endTime: '', icon: 'fa-book-open', iconColor: 'text-blue-300', completed: false, isAlarmActive: false, isSelected: true }
+                ]
+            },
+            {
+                id: 'cat-2',
+                title: '職安課程及測驗',
+                number: '2',
+                themeClass: 'bg-[#f0f4eb]',
+                headerColor: 'bg-[#81c784]',
+                quote: '安全工作 健康生活\n守護自己與家人\n從學習開始！<i class="fa-regular fa-heart"></i>',
+                tasks: [
+                    { id: 't2-1', name: '觀看職安課程', startTime: '', endTime: '', icon: 'fa-video', iconColor: 'text-gray-500', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't2-2', name: '重點筆記整理', startTime: '', endTime: '', icon: 'fa-pen-to-square', iconColor: 'text-yellow-600', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't2-3', name: '完成測驗', startTime: '', endTime: '', icon: 'fa-check-circle', iconColor: 'text-green-500', completed: false, isAlarmActive: false, isSelected: true }
+                ]
+            },
+            {
+                id: 'cat-3',
+                title: 'AI 相關考試',
+                number: '3',
+                themeClass: 'bg-[#f0f4ff]',
+                headerColor: 'bg-[#7986cb]',
+                quote: '學習新科技\n打開更多可能\n創造更好的未來！<i class="fa-regular fa-heart"></i>',
+                tasks: [
+                    { id: 't3-1', name: 'iPAS 應用規劃師初級', startTime: '', endTime: '', icon: 'fa-robot', iconColor: 'text-blue-500', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't3-2', name: 'iPAS 應用規劃師中級', startTime: '', endTime: '', icon: 'fa-microchip', iconColor: 'text-indigo-500', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't3-3', name: '人工智慧素養', startTime: '', endTime: '', icon: 'fa-brain', iconColor: 'text-pink-400', completed: false, isAlarmActive: false, isSelected: true },
+                    { id: 't3-4', name: '資安', startTime: '', endTime: '', icon: 'fa-shield-halved', iconColor: 'text-green-600', completed: false, isAlarmActive: false, isSelected: true }
+                ]
+            }
+        ];
+
+        // 複製預設值給 courseData
+        let courseData = JSON.parse(JSON.stringify(defaultCourseTemplate));
+
+        // 開啟設定模態視窗
+        function openSettingsModal() {
+            initAudio();
+            playClickSound();
+            renderSettingsModalBody();
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 關閉設定模態視窗
+        function closeSettingsModal() {
+            initAudio();
+            playClickSound();
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // 渲染設定面板內容
+        function renderSettingsModalBody() {
+            const body = document.getElementById('settings-modal-body');
+            body.innerHTML = '';
+
+            courseData.forEach((cat, catIdx) => {
+                const section = document.createElement('div');
+                section.className = 'bg-gray-50/80 p-4 rounded-2xl border border-gray-200/60';
+
+                // 主題名稱輸入
+                const headerRow = document.createElement('div');
+                headerRow.className = 'flex items-center gap-3 mb-3';
+                headerRow.innerHTML = `
+                    <span class="${cat.headerColor} text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">${cat.number}</span>
+                    <input type="text" id="setting-cat-title-${catIdx}" value="${cat.title}" placeholder="主題名稱 (例: 英文)" class="font-bold text-base text-[#5d4037] bg-white border border-gray-200 rounded-lg px-3 py-1.5 w-full focus:outline-none focus:border-pink-400">
+                `;
+                section.appendChild(headerRow);
+
+                // 子項目列表
+                const taskContainer = document.createElement('div');
+                taskContainer.id = `setting-tasks-container-${catIdx}`;
+                taskContainer.className = 'space-y-2 pl-2';
+
+                cat.tasks.forEach((task, taskIdx) => {
+                    const taskRow = createSettingTaskRow(catIdx, taskIdx, task.name);
+                    taskContainer.appendChild(taskRow);
+                });
+
+                section.appendChild(taskContainer);
+
+                // 新增子項目按鈕
+                const addBtn = document.createElement('button');
+                addBtn.type = 'button';
+                addBtn.className = 'mt-3 ml-2 text-xs font-medium text-pink-500 hover:text-pink-600 flex items-center gap-1 transition-colors';
+                addBtn.innerHTML = '<i class="fa-solid fa-plus-circle"></i> 新增子項目';
+                addBtn.onclick = () => addSettingTaskRow(catIdx);
+                section.appendChild(addBtn);
+
+                body.appendChild(section);
+            });
+        }
+
+        // 建立單個子項目編輯列
+        function createSettingTaskRow(catIdx, taskIdx, taskName) {
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2 setting-task-row';
+            row.dataset.catIdx = catIdx;
+            row.innerHTML = `
+                <i class="fa-solid fa-circle text-[6px] text-pink-300 ml-1"></i>
+                <input type="text" value="${taskName}" placeholder="子項目名稱" class="setting-task-name bg-white text-sm text-[#5d4037] border border-gray-200 rounded-lg px-3 py-1.5 flex-1 focus:outline-none focus:border-pink-400">
+                <button type="button" onclick="this.parentElement.remove()" class="text-gray-300 hover:text-red-400 p-1.5 rounded transition-colors" title="刪除子項目">
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                </button>
+            `;
+            return row;
+        }
+
+        // 於指定主題新增一列空白子項目
+        function addSettingTaskRow(catIdx) {
+            initAudio();
+            playClickSound();
+            const container = document.getElementById(`setting-tasks-container-${catIdx}`);
+            const newRow = createSettingTaskRow(catIdx, container.children.length, '');
+            container.appendChild(newRow);
+            const input = newRow.querySelector('input');
+            if (input) input.focus();
+        }
+
+        // 儲存設定變更
+        function saveSettings() {
+            initAudio();
+            playClickSound();
+
+            courseData.forEach((cat, catIdx) => {
+                const titleInput = document.getElementById(`setting-cat-title-${catIdx}`);
+                if (titleInput && titleInput.value.trim()) {
+                    cat.title = titleInput.value.trim();
+                }
+
+                // 讀取該主題底下的所有子項目
+                const container = document.getElementById(`setting-tasks-container-${catIdx}`);
+                const rows = container.querySelectorAll('.setting-task-row');
+                const newTasks = [];
+
+                rows.forEach((row, idx) => {
+                    const input = row.querySelector('.setting-task-name');
+                    const taskName = input ? input.value.trim() : '';
+                    if (taskName) {
+                        // 如果原本有對應位置的任務，保留其時間及狀態
+                        const oldTask = cat.tasks[idx];
+                        newTasks.push({
+                            id: `t${catIdx + 1}-${Date.now()}-${idx}`,
+                            name: taskName,
+                            startTime: oldTask ? oldTask.startTime : '',
+                            endTime: oldTask ? oldTask.endTime : '',
+                            icon: oldTask ? oldTask.icon : 'fa-book-bookmark',
+                            iconColor: oldTask ? oldTask.iconColor : 'text-pink-400',
+                            completed: oldTask ? oldTask.completed : false,
+                            isAlarmActive: oldTask ? oldTask.isAlarmActive : false,
+                            isSelected: oldTask ? (oldTask.isSelected !== false) : true
+                        });
+                    }
+                });
+
+                // 若完全清空，保留一個預設任務避免空區塊
+                if (newTasks.length === 0) {
+                    newTasks.push({
+                        id: `t${catIdx + 1}-${Date.now()}-0`,
+                        name: '學習任務 1',
+                        startTime: '',
+                        endTime: '',
+                        icon: 'fa-book-bookmark',
+                        iconColor: 'text-pink-400',
+                        completed: false,
+                        isAlarmActive: false,
+                        isSelected: true
+                    });
+                }
+
+                cat.tasks = newTasks;
+            });
+
+            closeSettingsModal();
+            renderCourses();
+            showMessage('<i class="fa-solid fa-check-circle mr-2"></i>學習主題與項目已成功更新！', true);
+        }
+
+        // 恢復原圖預設主題
+        function resetDefaultCourses() {
+            initAudio();
+            playClickSound();
+            courseData = JSON.parse(JSON.stringify(defaultCourseTemplate));
+            renderSettingsModalBody();
+            showMessage('<i class="fa-solid fa-rotate-left mr-2"></i>已重設為預設學習主題！', true);
+        }
 
         // 自動排程狀態變數
         let autoScheduleMode = false;
@@ -500,50 +760,6 @@
             }
             renderCourses();
         }
-
-        // 課程資料結構，參考圖片內容
-        const courseData = [
-            {
-                id: 'cat-1',
-                title: '英文',
-                number: '1',
-                themeClass: 'bg-[#faebeb]', // 淺粉背景
-                headerColor: 'bg-[#e57373]', // 粉紅標題背景
-                quote: 'Small steps every day,\nbig results one day.',
-                tasks: [
-                    { id: 't1-1', name: '肯定句英文 Speak', startTime: '', endTime: '', icon: 'fa-comment-dots', iconColor: 'text-blue-400', completed: false, isAlarmActive: false },
-                    { id: 't1-2', name: '林熙 - 24 天英語口說', startTime: '', endTime: '', icon: 'fa-play-circle', iconColor: 'text-pink-400', completed: false, isAlarmActive: false },
-                    { id: 't1-3', name: '抄寫英語的奇蹟', startTime: '', endTime: '', icon: 'fa-book-open', iconColor: 'text-blue-300', completed: false, isAlarmActive: false }
-                ]
-            },
-            {
-                id: 'cat-2',
-                title: '職安課程及測驗',
-                number: '2',
-                themeClass: 'bg-[#f0f4eb]', // 淺綠背景
-                headerColor: 'bg-[#81c784]', // 綠色標題背景
-                quote: '安全工作 健康生活\n守護自己與家人\n從學習開始！<i class="fa-regular fa-heart"></i>',
-                tasks: [
-                    { id: 't2-1', name: '觀看職安課程', startTime: '', endTime: '', icon: 'fa-video', iconColor: 'text-gray-500', completed: false, isAlarmActive: false },
-                    { id: 't2-2', name: '重點筆記整理', startTime: '', endTime: '', icon: 'fa-pen-to-square', iconColor: 'text-yellow-600', completed: false, isAlarmActive: false },
-                    { id: 't2-3', name: '完成測驗', startTime: '', endTime: '', icon: 'fa-check-circle', iconColor: 'text-green-500', completed: false, isAlarmActive: false }
-                ]
-            },
-            {
-                id: 'cat-3',
-                title: 'AI 相關考試',
-                number: '3',
-                themeClass: 'bg-[#f0f4ff]', // 淺藍背景
-                headerColor: 'bg-[#7986cb]', // 藍色標題背景
-                quote: '學習新科技\n打開更多可能\n創造更好的未來！<i class="fa-regular fa-heart"></i>',
-                tasks: [
-                    { id: 't3-1', name: 'iPAS 應用規劃師初級', startTime: '', endTime: '', icon: 'fa-robot', iconColor: 'text-blue-500', completed: false, isAlarmActive: false },
-                    { id: 't3-2', name: 'iPAS 應用規劃師中級', startTime: '', endTime: '', icon: 'fa-microchip', iconColor: 'text-indigo-500', completed: false, isAlarmActive: false },
-                    { id: 't3-3', name: '人工智慧素養', startTime: '', endTime: '', icon: 'fa-brain', iconColor: 'text-pink-400', completed: false, isAlarmActive: false },
-                    { id: 't3-4', name: '資安', startTime: '', endTime: '', icon: 'fa-shield-halved', iconColor: 'text-green-600', completed: false, isAlarmActive: false }
-                ]
-            }
-        ];
 
         function renderCourses() {
             const container = document.getElementById('course-container');
