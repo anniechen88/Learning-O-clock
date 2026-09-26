@@ -201,6 +201,9 @@
         
         <!-- 音效控制面板 (水晶玻璃質感) -->
         <div class="mt-5 flex flex-wrap justify-center gap-3 w-full">
+            <button id="voice-btn" onclick="toggleVoice()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-volume-high mr-2 text-pink-400"></i> 語音提醒: 開
+            </button>
             <button id="auto-schedule-btn" onclick="toggleAutoScheduleMenu()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
                 <i class="fa-solid fa-wand-magic-sparkles mr-2 text-pink-400"></i> 自動排程
             </button>
@@ -329,6 +332,55 @@
         let beepInterval;
         let isTicking = false;
         let tickInterval;
+        let isVoiceEnabled = true;
+
+        // 初始化語音清單
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // 語音播報功能 (原生 Web Speech Synthesis，無延遲零依賴)
+        function speakText(text) {
+            if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel(); // 停止前一段發音
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-TW';
+                utterance.rate = 0.92; // 沉穩親切的語速
+                utterance.pitch = 1.05; // 稍微輕快自然的聲調
+                
+                const voices = window.speechSynthesis.getVoices();
+                const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.includes('TW')) || 
+                                voices.find(v => v.lang.startsWith('zh') || v.lang.includes('cmn'));
+                if (zhVoice) {
+                    utterance.voice = zhVoice;
+                }
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.error("語音提醒播放失敗:", e);
+            }
+        }
+
+        // 開關語音提醒
+        function toggleVoice() {
+            initAudio();
+            playClickSound();
+            isVoiceEnabled = !isVoiceEnabled;
+            const btn = document.getElementById('voice-btn');
+            if (isVoiceEnabled) {
+                btn.classList.add('text-pink-600');
+                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-2 text-pink-400"></i> 語音提醒: 開';
+                showMessage('<i class="fa-solid fa-volume-high mr-2"></i>語音提醒已開啟！', true);
+                speakText("語音提醒已開啟");
+            } else {
+                btn.classList.remove('text-pink-600');
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark mr-2 text-gray-400"></i> 語音提醒: 關';
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                showMessage('<i class="fa-solid fa-volume-xmark mr-2"></i>語音提醒已關閉。');
+            }
+        }
 
         // 初始化 AudioContext，必須在使用者有互動後才能呼叫
         function initAudio() {
@@ -465,6 +517,11 @@
             setTimeout(() => {
                 playDoubleBeep(); // 模擬鬧鐘音效
             }, 1000);
+
+            // 測試語音播報
+            setTimeout(() => {
+                speakText("時間到，請開始學習肯定句英文 Speak。學習時間結束，請休息。");
+            }, 1800);
         }
         // --- 結束音效系統設定 ---
 
@@ -810,6 +867,10 @@
                 activeAlarmTask = null;
             }
 
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
             if (isTicking) {
                 toggleTicking(); 
             }
@@ -831,6 +892,8 @@
                     task.isAlarmActive = false;
                     task.isRinging = false;
                     task.isSelected = true;
+                    task._lastStartFired = null;
+                    task._lastEndFired = null;
                 });
             });
 
@@ -843,11 +906,12 @@
             initAudio();
             const task = courseData[catIndex].tasks[taskIndex];
             
-            // 如果這個任務正在響鈴，點擊打勾就停止鬧鐘
+            // 如果這個任務正在響鈴，點擊打勾就停止鬧鐘與語音
             if (task.isRinging) {
                 clearInterval(beepInterval);
                 task.isRinging = false;
                 activeAlarmTask = null;
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             }
 
             if (isChecked) {
@@ -898,6 +962,7 @@
 
                 category.tasks.forEach((task, taskIndex) => {
                     const taskItem = document.createElement('div');
+                    taskItem.id = `task-item-${task.id}`;
                     
                     // 根據狀態設定不同的外觀 (包含響鈴特效)
                     let itemClasses = `flex flex-col lg:flex-row lg:items-center justify-between bg-white/60 p-4 rounded-xl transition-all duration-200`;
@@ -906,7 +971,6 @@
                     } else if (task.isRinging) {
                         // 正在響鈴時的特效：粉紅外框、發光陰影、脈衝動畫
                         itemClasses += ` border-2 border-pink-400 shadow-[0_0_15px_rgba(244,114,182,0.6)] bg-pink-50 animate-[pulse_1s_infinite]`;
-                        taskItem.id = `ringing-task-${task.id}`;
                     } else if (task.isSelected === false) {
                         // 未勾選加入排程時的視覺微調
                         itemClasses += ` opacity-80 grayscale-[20%]`;
@@ -1012,12 +1076,12 @@
                     alarmBtn.innerHTML = `<i class="fa-solid fa-bell${task.isAlarmActive ? ' ring-animation' : ''}"></i>`;
                     alarmBtn.onclick = () => toggleAlarm(catIndex, taskIndex);
                     
-                    if(!task.endTime && !task.isAlarmActive) {
-                        alarmBtn.title = "請先設定結束時間";
+                    if(!task.startTime && !task.endTime && !task.isAlarmActive) {
+                        alarmBtn.title = "請先設定開始或結束時間";
                     } else if (task.isAlarmActive) {
-                         alarmBtn.title = "點擊取消鬧鐘 (已啟用金色提醒)";
+                         alarmBtn.title = "點擊取消鬧鐘 (已啟用金色開始/結束語音提醒)";
                     } else {
-                         alarmBtn.title = "點擊開啟鬧鐘 (依據結束時間)";
+                         alarmBtn.title = "點擊開啟鬧鐘 (支援開始與結束語音提醒)";
                     }
 
                     timeContainer.appendChild(startTimeGroup);
@@ -1107,12 +1171,13 @@
                 clearInterval(beepInterval);
                 task.isRinging = false;
                 activeAlarmTask = null;
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
                 renderCourses();
                 return;
             }
 
-            if (!task.endTime) {
-                showMessage('<strong class="font-bold">提示：</strong><span class="block sm:inline ml-1"> 請先設定預計結束的時間！</span>');
+            if (!task.startTime && !task.endTime) {
+                showMessage('<strong class="font-bold">提示：</strong><span class="block sm:inline ml-1"> 請先設定預計開始或結束的時間！</span>');
                 return;
             }
             task.isAlarmActive = !task.isAlarmActive;
@@ -1121,6 +1186,24 @@
 
         // 檢查鬧鐘與更新時鐘
         let activeAlarmTask = null;
+
+        // 觸發「開始學習」語音提醒
+        function triggerStartReminder(task) {
+            initAudio();
+            playSuccessSound(); // 悅耳提示音
+            speakText(`時間到，請開始學習，${task.name}`);
+            showMessage(`<i class="fa-solid fa-bell text-pink-500 mr-2 text-lg animate-bounce"></i>時間到！請開始學習：<strong class="text-pink-600 ml-1 font-bold">${task.name}</strong>`, true);
+
+            // 滾動並高亮該項目
+            const el = document.getElementById(`task-item-${task.id}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-2', 'ring-pink-400', 'bg-pink-100/60');
+                setTimeout(() => {
+                    el.classList.remove('ring-2', 'ring-pink-400', 'bg-pink-100/60');
+                }, 4000);
+            }
+        }
 
         function updateClockAndCheckAlarms() {
             const now = new Date();
@@ -1132,24 +1215,30 @@
             const currentTimeStr = `${currentHour}:${currentMinute}`;
             const currentSecond = now.getSeconds();
 
-            // 每分鐘的第0秒檢查一次鬧鐘，避免同一分鐘內重複觸發
-            if (currentSecond === 0 && !activeAlarmTask) {
+            // 每分鐘的第0秒檢查鬧鐘
+            if (currentSecond === 0) {
                 for (const category of courseData) {
                     for (const task of category.tasks) {
-                        // 檢查 endTime 是否符合當前時間，且鬧鐘有開啟，且任務未完成
-                        if (task.isAlarmActive && !task.completed && task.endTime === currentTimeStr) {
-                            triggerAlarm(task);
-                            // 觸發後將其設為未啟用，並標記為正在響鈴
-                            task.isAlarmActive = false; 
+                        if (!task.isAlarmActive || task.completed) continue;
+
+                        // 1. 開始時間到了 -> 語音播報：「時間到，請開始學習 [子項目]」
+                        if (task.startTime === currentTimeStr && task._lastStartFired !== currentTimeStr) {
+                            task._lastStartFired = currentTimeStr;
+                            triggerStartReminder(task);
+                        }
+
+                        // 2. 結束時間到了 -> 響起鬧鐘並語音播報：「學習時間結束，請休息」
+                        if (task.endTime === currentTimeStr && !task.isRinging && task._lastEndFired !== currentTimeStr) {
+                            task._lastEndFired = currentTimeStr;
+                            task.isAlarmActive = false;
                             task.isRinging = true;
+                            triggerAlarm(task);
                             renderCourses();
-                            
-                            // 捲動畫面到正在響鈴的任務
+
                             setTimeout(() => {
-                                const el = document.getElementById(`ringing-task-${task.id}`);
-                                if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                const el = document.getElementById(`task-item-${task.id}`);
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }, 100);
-                            return; // 一次只觸發一個
                         }
                     }
                 }
@@ -1162,10 +1251,13 @@
             // 確保音訊系統已初始化並喚醒
             initAudio();
 
-            // 立即播放一次聲音
+            // 語音播報：學習時間結束，請休息
+            speakText("學習時間結束，請休息");
+
+            // 立即播放一次鬧鐘聲音
             playDoubleBeep();
-            // 每 1.5 秒重複播放一次雙聲嗶聲
-            beepInterval = setInterval(playDoubleBeep, 1500); 
+            // 每 2 秒重複播放一次雙聲嗶聲
+            beepInterval = setInterval(playDoubleBeep, 2000); 
         }
 
         // 初始化
