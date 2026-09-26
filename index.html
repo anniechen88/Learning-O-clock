@@ -165,6 +165,16 @@
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.3s ease-out; }
         .modal-exit { opacity: 1; transform: scale(1); }
         .modal-exit-active { opacity: 0; transform: scale(0.9); transition: all 0.2s ease-in; }
+
+        /* 彈出提示動畫 (Tooltip Pop-in) */
+        @keyframes tooltip-bounce {
+            0% { transform: translate(-50%, 4px) scale(0.95); opacity: 0; }
+            50% { transform: translate(-50%, -2px) scale(1.03); opacity: 1; }
+            100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+        }
+        .tooltip-pop-in {
+            animation: tooltip-bounce 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
@@ -1041,28 +1051,32 @@
 
                     // 開始時間 (加入鎖定時的灰階背景與透明度視覺特效)
                     const startTimeGroup = document.createElement('div');
-                    startTimeGroup.className = `flex items-center rounded-lg p-1 border shadow-inner flex-1 sm:flex-none transition-all duration-300 ${task.completed ? 'bg-gray-100 border-gray-300 opacity-60' : 'bg-white border-gray-200'}`;
+                    startTimeGroup.id = `time-group-${catIndex}-${taskIndex}-startTime`;
+                    startTimeGroup.className = `relative flex items-center rounded-lg p-1 border shadow-inner flex-1 sm:flex-none transition-all duration-300 ${task.completed ? 'bg-gray-100 border-gray-300 opacity-60' : 'bg-white border-gray-200'}`;
                     startTimeGroup.innerHTML = `<span class="text-xs ${task.completed ? 'text-gray-400' : 'text-gray-500'} mr-1 ml-1 whitespace-nowrap">開始</span>`;
                     
                     const startTimeInput = document.createElement('input');
+                    startTimeInput.id = `time-input-${catIndex}-${taskIndex}-startTime`;
                     startTimeInput.type = 'time';
                     startTimeInput.className = `bg-transparent border-none outline-none font-medium px-1 text-sm w-full sm:w-auto transition-colors ${task.completed ? 'text-gray-400 cursor-not-allowed' : 'text-[#5d4037]'}`;
                     startTimeInput.value = task.startTime;
                     startTimeInput.disabled = task.completed; // 完成時鎖定
-                    startTimeInput.onchange = (e) => updateTaskTime(catIndex, taskIndex, 'startTime', e.target.value);
+                    startTimeInput.onchange = (e) => updateTaskTime(catIndex, taskIndex, 'startTime', e.target.value, e.target);
                     startTimeGroup.appendChild(startTimeInput);
 
                     // 結束時間 (加入鎖定時的灰階背景與透明度視覺特效)
                     const endTimeGroup = document.createElement('div');
-                    endTimeGroup.className = `flex items-center rounded-lg p-1 border shadow-inner flex-1 sm:flex-none transition-all duration-300 ${task.completed ? 'bg-gray-100 border-gray-300 opacity-60' : 'bg-white border-gray-200'}`;
+                    endTimeGroup.id = `time-group-${catIndex}-${taskIndex}-endTime`;
+                    endTimeGroup.className = `relative flex items-center rounded-lg p-1 border shadow-inner flex-1 sm:flex-none transition-all duration-300 ${task.completed ? 'bg-gray-100 border-gray-300 opacity-60' : 'bg-white border-gray-200'}`;
                     endTimeGroup.innerHTML = `<span class="text-xs ${task.completed ? 'text-gray-400' : 'text-gray-500'} mr-1 ml-1 whitespace-nowrap">結束</span>`;
                     
                     const endTimeInput = document.createElement('input');
+                    endTimeInput.id = `time-input-${catIndex}-${taskIndex}-endTime`;
                     endTimeInput.type = 'time';
                     endTimeInput.className = `bg-transparent border-none outline-none font-medium px-1 text-sm w-full sm:w-auto transition-colors ${task.completed ? 'text-gray-400 cursor-not-allowed' : 'text-[#5d4037]'}`;
                     endTimeInput.value = task.endTime;
                     endTimeInput.disabled = task.completed || task.isAlarmActive;
-                    endTimeInput.onchange = (e) => updateTaskTime(catIndex, taskIndex, 'endTime', e.target.value);
+                    endTimeInput.onchange = (e) => updateTaskTime(catIndex, taskIndex, 'endTime', e.target.value, e.target);
                     endTimeGroup.appendChild(endTimeInput);
 
                     // 鬧鐘切換按鈕 (按下啟用時呈現金屬質感的金色)
@@ -1144,10 +1158,157 @@
             showMessage(`<i class="fa-solid fa-check-circle mr-2"></i>已為 ${scheduledCount} 個選取的項目自動排程！`, true);
         }
 
-        function updateTaskTime(catIndex, taskIndex, timeType, timeValue) {
+        // 時間字串轉分鐘數
+        function timeToMinutes(t) {
+            if (!t) return null;
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        // 檢查輸入的時間是否重複或產生時段衝突
+        function isTimeDuplicateOrInvalid(catIndex, taskIndex, timeType, newTime) {
+            if (!newTime) return false;
+            
+            const currentTask = courseData[catIndex].tasks[taskIndex];
+            const newMins = timeToMinutes(newTime);
+            if (newMins === null) return true;
+
+            // 1. 同一任務的開始時間與結束時間不可相同或顛倒
+            if (timeType === 'startTime') {
+                if (currentTask.endTime) {
+                    const endMins = timeToMinutes(currentTask.endTime);
+                    if (newTime === currentTask.endTime || newMins >= endMins) {
+                        return true;
+                    }
+                }
+            } else if (timeType === 'endTime') {
+                if (currentTask.startTime) {
+                    const startMins = timeToMinutes(currentTask.startTime);
+                    if (newTime === currentTask.startTime || newMins <= startMins) {
+                        return true;
+                    }
+                }
+            }
+
+            // 整理需要進行比對的任務清單
+            let tasksToCheck = [];
+            let passedCurrent = false;
+
+            for (let c = 0; c < courseData.length; c++) {
+                for (let t = 0; t < courseData[c].tasks.length; t++) {
+                    const isCurrent = (c === catIndex && t === taskIndex);
+                    if (isCurrent) {
+                        passedCurrent = true;
+                        continue;
+                    }
+
+                    // 若正在自動排程模式且設定開始時間，後續勾選的項目會被依序覆蓋重排，不列入前置比對
+                    if (autoScheduleMode && timeType === 'startTime' && passedCurrent) {
+                        if (courseData[c].tasks[t].isSelected !== false) {
+                            continue;
+                        }
+                    }
+
+                    tasksToCheck.push(courseData[c].tasks[t]);
+                }
+            }
+
+            // 2. 比對所有其他任務，確保沒有相同的時間點或重疊時段
+            for (const other of tasksToCheck) {
+                // 不能有完全相同的時間點（開始或結束均不可重複）
+                if (other.startTime === newTime || other.endTime === newTime) {
+                    return true;
+                }
+
+                // 檢查是否落入其他任務正在學習的區間內 (時段重疊)
+                if (other.startTime && other.endTime) {
+                    const otherStart = timeToMinutes(other.startTime);
+                    const otherEnd = timeToMinutes(otherEnd = other.endTime);
+                    if (otherStart < otherEnd) {
+                        if (newMins > otherStart && newMins < otherEnd) {
+                            return true;
+                        }
+
+                        // 若當前任務已有另一端時間，檢查整體區間是否與既有項目交錯
+                        if (timeType === 'startTime' && currentTask.endTime) {
+                            const curEnd = timeToMinutes(currentTask.endTime);
+                            if (Math.max(newMins, otherStart) < Math.min(curEnd, otherEnd)) {
+                                return true;
+                            }
+                        } else if (timeType === 'endTime' && currentTask.startTime) {
+                            const curStart = timeToMinutes(currentTask.startTime);
+                            if (Math.max(curStart, otherStart) < Math.min(newMins, otherEnd)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // 顯示在特定輸入框正上方的紅色警示提示
+        function showTimeInputError(catIndex, taskIndex, timeType, targetInput) {
+            const groupEl = (targetInput && targetInput.parentElement) || 
+                            document.getElementById(`time-group-${catIndex}-${taskIndex}-${timeType}`);
+            const inputEl = targetInput || 
+                            document.getElementById(`time-input-${catIndex}-${taskIndex}-${timeType}`);
+            
+            // 清空錯誤輸入值
+            if (inputEl) {
+                inputEl.value = '';
+            }
+            
+            if (!groupEl) return;
+            
+            // 清除之前的計時器與舊提示（若有）
+            if (groupEl._errorTimer) {
+                clearTimeout(groupEl._errorTimer);
+            }
+            const oldTooltip = groupEl.querySelector('.time-error-tooltip');
+            if (oldTooltip) oldTooltip.remove();
+            
+            // 建立在時間輸入框正上方的紅色警示氣泡 (含指向輸入框的倒三角指示箭頭)
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip-pop-in time-error-tooltip absolute bottom-full mb-2 left-1/2 z-40 flex flex-col items-center pointer-events-none drop-shadow-md';
+            tooltip.innerHTML = `
+                <div class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg flex items-center whitespace-nowrap gap-1.5 border border-red-300/80">
+                    <i class="fa-solid fa-circle-exclamation text-amber-200 text-sm"></i>
+                    <span>時間輸入有誤，請重新輸入</span>
+                </div>
+                <div class="w-0 h-0 border-x-[5px] border-x-transparent border-t-[6px] border-t-red-500"></div>
+            `;
+            
+            // 為當前輸入群組加入紅色醒目外框與淡紅底色
+            groupEl.classList.add('border-red-400', 'ring-2', 'ring-red-300', 'bg-red-50');
+            groupEl.appendChild(tooltip);
+            
+            // 2.5 秒後平滑淡出並移除提示與外框
+            groupEl._errorTimer = setTimeout(() => {
+                tooltip.style.transition = 'all 0.25s ease-out';
+                tooltip.style.opacity = '0';
+                tooltip.style.transform = 'translate(-50%, -4px) scale(0.95)';
+                setTimeout(() => {
+                    tooltip.remove();
+                    groupEl.classList.remove('border-red-400', 'ring-2', 'ring-red-300', 'bg-red-50');
+                }, 250);
+            }, 2500);
+        }
+
+        function updateTaskTime(catIndex, taskIndex, timeType, timeValue, targetInput) {
             initAudio();
             playClickSound(); // 設定時間時發出按鍵音
             
+            // 驗證輸入時間是否重複或有衝突
+            if (timeValue) {
+                if (isTimeDuplicateOrInvalid(catIndex, taskIndex, timeType, timeValue)) {
+                    courseData[catIndex].tasks[taskIndex][timeType] = '';
+                    showTimeInputError(catIndex, taskIndex, timeType, targetInput);
+                    return;
+                }
+            }
+
             courseData[catIndex].tasks[taskIndex][timeType] = timeValue;
 
             // 如果啟動了自動排程模式，且使用者設定了「開始時間」
