@@ -492,6 +492,24 @@
             playSingleBeep(now + 0.2);       // 停頓 0.2 秒後發出第二聲
         }
 
+        // 5. 錯誤提示音效 (短促低音提醒)
+        function playErrorSound() {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(140, audioCtx.currentTime + 0.15);
+                gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch (e) {}
+        }
+
         // --- 音效控制介面功能 ---
         function toggleTicking() {
             initAudio();
@@ -943,7 +961,7 @@
 
             courseData.forEach((category, catIndex) => {
                 const catDiv = document.createElement('div');
-                catDiv.className = `${category.themeClass} rounded-[2rem] p-6 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md`;
+                catDiv.className = `${category.themeClass} rounded-[2rem] p-6 shadow-sm relative transition-all duration-300 hover:shadow-md`;
                 
                 // 標題列
                 const headerDiv = document.createElement('div');
@@ -975,7 +993,7 @@
                     taskItem.id = `task-item-${task.id}`;
                     
                     // 根據狀態設定不同的外觀 (包含響鈴特效)
-                    let itemClasses = `flex flex-col lg:flex-row lg:items-center justify-between bg-white/60 p-4 rounded-xl transition-all duration-200`;
+                    let itemClasses = `relative flex flex-col lg:flex-row lg:items-center justify-between bg-white/60 p-4 rounded-xl transition-all duration-200`;
                     if (task.completed) {
                         itemClasses += ` opacity-60`;
                     } else if (task.isRinging) {
@@ -1216,15 +1234,16 @@
             // 2. 比對所有其他任務，確保沒有相同的時間點或重疊時段
             for (const other of tasksToCheck) {
                 // 不能有完全相同的時間點（開始或結束均不可重複）
-                if (other.startTime === newTime || other.endTime === newTime) {
+                if ((other.startTime && other.startTime === newTime) || 
+                    (other.endTime && other.endTime === newTime)) {
                     return true;
                 }
 
                 // 檢查是否落入其他任務正在學習的區間內 (時段重疊)
                 if (other.startTime && other.endTime) {
                     const otherStart = timeToMinutes(other.startTime);
-                    const otherEnd = timeToMinutes(otherEnd = other.endTime);
-                    if (otherStart < otherEnd) {
+                    const otherEnd = timeToMinutes(other.endTime);
+                    if (otherStart !== null && otherEnd !== null && otherStart < otherEnd) {
                         if (newMins > otherStart && newMins < otherEnd) {
                             return true;
                         }
@@ -1232,12 +1251,12 @@
                         // 若當前任務已有另一端時間，檢查整體區間是否與既有項目交錯
                         if (timeType === 'startTime' && currentTask.endTime) {
                             const curEnd = timeToMinutes(currentTask.endTime);
-                            if (Math.max(newMins, otherStart) < Math.min(curEnd, otherEnd)) {
+                            if (curEnd !== null && Math.max(newMins, otherStart) < Math.min(curEnd, otherEnd)) {
                                 return true;
                             }
                         } else if (timeType === 'endTime' && currentTask.startTime) {
                             const curStart = timeToMinutes(currentTask.startTime);
-                            if (Math.max(curStart, otherStart) < Math.min(newMins, otherEnd)) {
+                            if (curStart !== null && Math.max(curStart, otherStart) < Math.min(newMins, otherEnd)) {
                                 return true;
                             }
                         }
@@ -1250,6 +1269,9 @@
 
         // 顯示在特定輸入框正上方的紅色警示提示
         function showTimeInputError(catIndex, taskIndex, timeType, targetInput) {
+            initAudio();
+            playErrorSound();
+
             const groupEl = (targetInput && targetInput.parentElement) || 
                             document.getElementById(`time-group-${catIndex}-${taskIndex}-${timeType}`);
             const inputEl = targetInput || 
@@ -1271,29 +1293,33 @@
             
             // 建立在時間輸入框正上方的紅色警示氣泡 (含指向輸入框的倒三角指示箭頭)
             const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip-pop-in time-error-tooltip absolute bottom-full mb-2 left-1/2 z-40 flex flex-col items-center pointer-events-none drop-shadow-md';
+            tooltip.className = 'tooltip-pop-in time-error-tooltip absolute bottom-full mb-2 left-1/2 z-50 flex flex-col items-center pointer-events-none drop-shadow-lg';
             tooltip.innerHTML = `
-                <div class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg flex items-center whitespace-nowrap gap-1.5 border border-red-300/80">
+                <div class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg flex items-center whitespace-nowrap gap-1.5 border border-red-300">
                     <i class="fa-solid fa-circle-exclamation text-amber-200 text-sm"></i>
                     <span>時間輸入有誤，請重新輸入</span>
                 </div>
                 <div class="w-0 h-0 border-x-[5px] border-x-transparent border-t-[6px] border-t-red-500"></div>
             `;
             
-            // 為當前輸入群組加入紅色醒目外框與淡紅底色
-            groupEl.classList.add('border-red-400', 'ring-2', 'ring-red-300', 'bg-red-50');
+            // 為當前輸入群組加入紅色醒目外框與淡紅底色，並提升圖層深度
+            groupEl.style.zIndex = '50';
+            groupEl.classList.add('border-red-500', 'ring-2', 'ring-red-300', 'bg-red-50');
+            groupEl.classList.remove('bg-white', 'border-gray-200');
             groupEl.appendChild(tooltip);
             
-            // 2.5 秒後平滑淡出並移除提示與外框
+            // 2.6 秒後平滑淡出並移除提示與高亮外框
             groupEl._errorTimer = setTimeout(() => {
                 tooltip.style.transition = 'all 0.25s ease-out';
                 tooltip.style.opacity = '0';
                 tooltip.style.transform = 'translate(-50%, -4px) scale(0.95)';
                 setTimeout(() => {
                     tooltip.remove();
-                    groupEl.classList.remove('border-red-400', 'ring-2', 'ring-red-300', 'bg-red-50');
+                    groupEl.style.zIndex = '';
+                    groupEl.classList.remove('border-red-500', 'ring-2', 'ring-red-300', 'bg-red-50');
+                    groupEl.classList.add('bg-white', 'border-gray-200');
                 }, 250);
-            }, 2500);
+            }, 2600);
         }
 
         function updateTaskTime(catIndex, taskIndex, timeType, timeValue, targetInput) {
