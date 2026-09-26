@@ -23,6 +23,86 @@
         .theme-blue { background-color: #e1f5fe; color: #0288d1; }
         .theme-purple { background-color: #ede7f6; color: #5e35b1; }
         
+        /* 水晶玻璃質感按鈕 (Crystal Glass Button) */
+        .crystal-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.6) 100%) !important;
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.85) !important;
+            box-shadow: 
+                0 6px 18px -2px rgba(215, 175, 185, 0.28),
+                inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
+                inset 0 -1.5px 2px 0 rgba(190, 160, 170, 0.12) !important;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .crystal-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 9999px 9999px 0 0;
+            pointer-events: none;
+        }
+        .crystal-btn:hover {
+            transform: translateY(-1.5px);
+            box-shadow: 
+                0 10px 22px -2px rgba(215, 165, 180, 0.4),
+                inset 0 2px 3px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 2px 0 rgba(190, 160, 170, 0.1) !important;
+        }
+        .crystal-btn:active {
+            transform: translateY(0.5px);
+        }
+
+        /* 金屬質感金色鬧鐘樣式 (Metallic Gold Alarm) */
+        .metallic-gold-alarm {
+            background: linear-gradient(135deg, #fff6c7 0%, #ffd700 28%, #e2ab24 65%, #ffd45e 100%) !important;
+            color: #6d4700 !important;
+            border: 1px solid #ffd84d !important;
+            box-shadow: 
+                0 4px 14px rgba(226, 171, 36, 0.5),
+                inset 0 1.5px 1.5px rgba(255, 255, 255, 0.95),
+                inset 0 -1.5px 2px rgba(110, 75, 0, 0.35) !important;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+            transform: scale(1.06);
+            transition: all 0.2s ease-out;
+        }
+        .metallic-gold-alarm i {
+            filter: drop-shadow(0 1px 2px rgba(120, 80, 0, 0.5));
+            animation: gentle-ring 2s infinite;
+        }
+
+        /* 羊毛氈風格設定面板 (Wool Felt Style) */
+        .felt-wool-modal {
+            background-color: #f6ede3;
+            background-image: 
+                radial-gradient(rgba(175, 140, 115, 0.13) 15%, transparent 16%),
+                radial-gradient(rgba(215, 185, 160, 0.12) 15%, transparent 16%),
+                linear-gradient(135deg, rgba(255, 248, 240, 0.7) 0%, rgba(242, 230, 218, 0.7) 100%);
+            background-size: 8px 8px, 12px 12px, 100% 100%;
+            background-position: 0 0, 4px 4px, 0 0;
+            border: 3px dashed #cbaf96 !important;
+            outline: 6px solid #f1e4d6;
+            box-shadow: 
+                0 25px 50px -12px rgba(110, 75, 55, 0.3),
+                inset 0 0 35px rgba(185, 150, 130, 0.15) !important;
+            position: relative;
+        }
+        .felt-item-card {
+            background: rgba(255, 253, 249, 0.92);
+            border: 2px dashed #dbc4b0;
+            border-radius: 1.25rem;
+            box-shadow: 0 3px 8px rgba(150, 120, 100, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+        .felt-stitch-border {
+            border: 1.5px dashed #d7beaa;
+        }
+
         /* 自訂核取方塊樣式 */
         .custom-checkbox {
             appearance: none;
@@ -90,7 +170,16 @@
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
 
     <header class="w-full max-w-3xl mb-8 text-center relative">
-        <h1 class="text-4xl md:text-5xl font-bold mb-2 text-[#8d6e63]" style="font-family: 'Times New Roman', serif; letter-spacing: 2px;">每日學習表</h1>
+        <h1 class="text-4xl md:text-5xl font-bold mb-2 text-[#8d6e63] flex items-center justify-center gap-3 flex-wrap" style="font-family: 'Times New Roman', 'Noto Sans TC', serif; letter-spacing: 2px;">
+            <span>每日學習鬧鐘</span>
+            <span class="inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-pink-300 via-rose-300 to-pink-400 text-white shadow-md shadow-pink-200/80 transform rotate-6 hover:rotate-12 transition-transform cursor-pointer group">
+                <i class="fa-solid fa-clock text-2xl md:text-3xl drop-shadow-sm group-hover:scale-110 transition-transform"></i>
+                <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-pink-500"></span>
+                </span>
+            </span>
+        </h1>
         <p class="text-xl md:text-2xl text-[#a1887f] italic font-serif mb-6">Daily Study Plan</p>
         
         <div class="absolute right-0 top-0 hidden md:block text-right">
@@ -110,33 +199,33 @@
             <span id="current-time" class="text-2xl font-medium text-[#5d4037]">--:--:--</span>
         </div>
         
-        <!-- 音效控制面板 -->
+        <!-- 音效控制面板 (水晶玻璃質感) -->
         <div class="mt-5 flex flex-wrap justify-center gap-3 w-full">
-            <button id="auto-schedule-btn" onclick="toggleAutoScheduleMenu()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-[#fff0f5] hover:text-pink-500 transition-colors shadow-sm cursor-pointer border border-transparent hover:border-pink-200">
-                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 自動排程
+            <button id="auto-schedule-btn" onclick="toggleAutoScheduleMenu()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-wand-magic-sparkles mr-2 text-pink-400"></i> 自動排程
             </button>
-            <button id="tick-btn" onclick="toggleTicking()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer">
-                <i class="fa-solid fa-stopwatch mr-2"></i> 專注滴答聲: 關
+            <button id="tick-btn" onclick="toggleTicking()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-stopwatch mr-2 text-pink-400"></i> 專注滴答聲: 關
             </button>
-            <button onclick="testAudio()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer">
-                <i class="fa-solid fa-music mr-2"></i> 音效測試
+            <button onclick="testAudio()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-music mr-2 text-pink-400"></i> 音效測試
             </button>
-            <button onclick="resetAll()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer hover:text-red-400">
-                <i class="fa-solid fa-rotate-right mr-2"></i> 重置
+            <button onclick="resetAll()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-red-400 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-rotate-right mr-2 text-pink-400"></i> 重置
             </button>
-            <button onclick="openSettingsModal()" class="glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-[#fff0f5] hover:text-pink-500 transition-colors shadow-sm cursor-pointer border border-transparent hover:border-pink-200">
-                <i class="fa-solid fa-gear mr-2"></i> 設定
+            <button onclick="openSettingsModal()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-gear mr-2 text-pink-400"></i> 設定
             </button>
         </div>
 
-        <!-- 自動排程子選單 -->
-        <div id="auto-schedule-menu" class="hidden mt-4 glass-panel rounded-2xl p-3 flex-wrap justify-center gap-2 items-center transition-all duration-300 transform scale-95 opacity-0 mx-auto w-max max-w-full shadow-md border border-pink-100">
-            <span class="text-sm text-[#8d6e63] font-medium mr-1"><i class="fa-solid fa-mug-hot mr-1"></i>休息：</span>
-            <button onclick="applyAutoSchedule(5)" class="px-3 py-1.5 bg-[#fce4ec] text-[#d81b60] border border-pink-200 rounded-lg text-sm hover:bg-pink-200 transition-colors shadow-sm">5 分</button>
-            <button onclick="applyAutoSchedule(10)" class="px-3 py-1.5 bg-[#e1f5fe] text-[#0288d1] border border-blue-200 rounded-lg text-sm hover:bg-blue-200 transition-colors shadow-sm">10 分</button>
-            <button onclick="applyAutoSchedule(15)" class="px-3 py-1.5 bg-[#ede7f6] text-[#5e35b1] border border-purple-200 rounded-lg text-sm hover:bg-purple-200 transition-colors shadow-sm">15 分</button>
+        <!-- 自動排程子選單 (水晶玻璃質感) -->
+        <div id="auto-schedule-menu" class="hidden mt-4 crystal-btn rounded-2xl p-3 flex-wrap justify-center gap-2 items-center transition-all duration-300 transform scale-95 opacity-0 mx-auto w-max max-w-full shadow-md border border-pink-100">
+            <span class="text-sm text-[#8d6e63] font-medium mr-1"><i class="fa-solid fa-mug-hot mr-1 text-pink-400"></i>休息：</span>
+            <button onclick="applyAutoSchedule(5)" class="crystal-btn px-3 py-1.5 text-[#d81b60] rounded-lg text-sm shadow-sm hover:brightness-105">5 分</button>
+            <button onclick="applyAutoSchedule(10)" class="crystal-btn px-3 py-1.5 text-[#0288d1] rounded-lg text-sm shadow-sm hover:brightness-105">10 分</button>
+            <button onclick="applyAutoSchedule(15)" class="crystal-btn px-3 py-1.5 text-[#5e35b1] rounded-lg text-sm shadow-sm hover:brightness-105">15 分</button>
             <div class="w-px h-5 bg-gray-300 mx-1 hidden sm:block"></div>
-            <button onclick="cancelAutoSchedule()" class="px-3 py-1.5 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors shadow-sm mt-2 sm:mt-0"><i class="fa-solid fa-xmark mr-1"></i>取消</button>
+            <button onclick="cancelAutoSchedule()" class="crystal-btn px-3 py-1.5 text-gray-600 rounded-lg text-sm shadow-sm hover:text-red-500 mt-2 sm:mt-0"><i class="fa-solid fa-xmark mr-1"></i>取消</button>
         </div>
     </header>
 
@@ -183,28 +272,31 @@
         </div>
     </footer>
 
-    <!-- 回到最頂端按鈕 -->
+    <!-- 回到最頂端按鈕 (水晶玻璃質感) -->
     <div class="w-full max-w-3xl flex justify-center mb-10">
-        <button onclick="scrollToTop()" class="glass-panel px-6 py-3 rounded-full text-sm font-medium text-[#795548] hover:text-[#d81b60] hover:bg-white transition-all shadow-sm hover:shadow-md flex items-center gap-2 group cursor-pointer border border-pink-100">
+        <button onclick="scrollToTop()" class="crystal-btn px-6 py-3 rounded-full text-sm font-medium text-[#795548] hover:text-[#d81b60] shadow-sm hover:shadow-md flex items-center gap-2 group cursor-pointer">
             <i class="fa-solid fa-arrow-up group-hover:-translate-y-1 transition-transform text-[#e57373]"></i>
             回到最上面
         </button>
     </div>
 
-    <!-- 學習內容設定模態框 (Modal) -->
-    <div id="settings-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="glass-panel bg-white/95 max-w-2xl w-full rounded-3xl p-6 shadow-2xl max-h-[90vh] flex flex-col border border-pink-100">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-100 mb-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-9 h-9 rounded-full bg-pink-100 text-pink-500 flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-pen-to-square"></i>
+    <!-- 學習內容設定模態框 (Modal - 羊毛氈風格，貼齊畫面最上方) -->
+    <div id="settings-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 hidden items-start justify-center p-4 pt-4 md:pt-8 overflow-y-auto">
+        <div class="felt-wool-modal max-w-2xl w-full rounded-3xl p-6 md:p-8 max-h-[88vh] flex flex-col mt-1 md:mt-2 shadow-2xl transition-all duration-300">
+            <div class="flex justify-between items-center pb-4 felt-stitch-border border-b border-t-0 border-l-0 border-r-0 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-[#e57373] text-white flex items-center justify-center font-bold text-lg shadow-sm border border-pink-200/80">
+                        <i class="fa-solid fa-shapes"></i>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-[#5d4037]">自訂學習主題與項目</h3>
-                        <p class="text-xs text-gray-400">更換三大主題名稱與自訂子項目清單</p>
+                        <h3 class="text-xl font-bold text-[#5d4037] flex items-center gap-2">
+                            自訂學習主題與項目
+                            <span class="text-xs bg-[#e8828f] text-white px-2 py-0.5 rounded-full font-normal">手作氈布風</span>
+                        </h3>
+                        <p class="text-xs text-[#8d6e63]">自由更換三大主題名稱與自訂子項目清單</p>
                     </div>
                 </div>
-                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button onclick="closeSettingsModal()" class="text-[#8d6e63] hover:text-red-500 p-2 rounded-full hover:bg-stone-200/50 transition-colors">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -214,13 +306,13 @@
                 <!-- 設定表單內容由 JS 動態生成 -->
             </div>
 
-            <div class="pt-4 border-t border-gray-100 mt-4 flex flex-wrap justify-between items-center gap-3">
-                <button onclick="resetDefaultCourses()" class="px-4 py-2 text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center">
+            <div class="pt-4 felt-stitch-border border-t border-b-0 border-l-0 border-r-0 mt-4 flex flex-wrap justify-between items-center gap-3">
+                <button onclick="resetDefaultCourses()" class="px-4 py-2 text-xs text-[#8d6e63] hover:text-red-500 transition-colors flex items-center font-medium">
                     <i class="fa-solid fa-rotate-left mr-1"></i> 恢復原圖預設主題
                 </button>
                 <div class="flex gap-2">
-                    <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">取消</button>
-                    <button onclick="saveSettings()" class="px-5 py-2 rounded-xl text-sm font-medium bg-pink-500 text-white hover:bg-pink-600 shadow-md hover:shadow-lg transition-all flex items-center">
+                    <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-sm font-medium bg-stone-200/70 text-[#5d4037] hover:bg-stone-300/80 transition-colors">取消</button>
+                    <button onclick="saveSettings()" class="px-5 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-pink-500 to-rose-400 text-white hover:from-pink-600 hover:to-rose-500 shadow-md hover:shadow-lg transition-all flex items-center">
                         <i class="fa-solid fa-check mr-1.5"></i> 儲存變更
                     </button>
                 </div>
@@ -433,7 +525,7 @@
         // 複製預設值給 courseData
         let courseData = JSON.parse(JSON.stringify(defaultCourseTemplate));
 
-        // 開啟設定模態視窗
+        // 開啟設定模態視窗 (靠頂顯示並重設滾動位置至最上方)
         function openSettingsModal() {
             initAudio();
             playClickSound();
@@ -441,6 +533,23 @@
             const modal = document.getElementById('settings-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            
+            // 確保彈出視窗外層與內層清單都在最頂端
+            modal.scrollTop = 0;
+            const body = document.getElementById('settings-modal-body');
+            if (body) {
+                body.scrollTop = 0;
+            }
+
+            // 雙重保險：在瀏覽器完成回流 (Reflow) 與渲染後再次校準滾動條至頂端
+            requestAnimationFrame(() => {
+                modal.scrollTop = 0;
+                if (body) body.scrollTop = 0;
+            });
+            setTimeout(() => {
+                modal.scrollTop = 0;
+                if (body) body.scrollTop = 0;
+            }, 30);
         }
 
         // 關閉設定模態視窗
@@ -459,14 +568,14 @@
 
             courseData.forEach((cat, catIdx) => {
                 const section = document.createElement('div');
-                section.className = 'bg-gray-50/80 p-4 rounded-2xl border border-gray-200/60';
+                section.className = 'felt-item-card p-4';
 
                 // 主題名稱輸入
                 const headerRow = document.createElement('div');
                 headerRow.className = 'flex items-center gap-3 mb-3';
                 headerRow.innerHTML = `
                     <span class="${cat.headerColor} text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">${cat.number}</span>
-                    <input type="text" id="setting-cat-title-${catIdx}" value="${cat.title}" placeholder="主題名稱 (例: 英文)" class="font-bold text-base text-[#5d4037] bg-white border border-gray-200 rounded-lg px-3 py-1.5 w-full focus:outline-none focus:border-pink-400">
+                    <input type="text" id="setting-cat-title-${catIdx}" value="${cat.title}" placeholder="主題名稱 (例: 英文)" class="font-bold text-base text-[#5d4037] bg-white border border-[#dac7b3] rounded-lg px-3 py-1.5 w-full focus:outline-none focus:border-pink-400 shadow-inner">
                 `;
                 section.appendChild(headerRow);
 
@@ -485,7 +594,7 @@
                 // 新增子項目按鈕
                 const addBtn = document.createElement('button');
                 addBtn.type = 'button';
-                addBtn.className = 'mt-3 ml-2 text-xs font-medium text-pink-500 hover:text-pink-600 flex items-center gap-1 transition-colors';
+                addBtn.className = 'mt-3 ml-2 text-xs font-medium text-pink-600 hover:text-pink-700 flex items-center gap-1 transition-colors';
                 addBtn.innerHTML = '<i class="fa-solid fa-plus-circle"></i> 新增子項目';
                 addBtn.onclick = () => addSettingTaskRow(catIdx);
                 section.appendChild(addBtn);
@@ -500,9 +609,9 @@
             row.className = 'flex items-center gap-2 setting-task-row';
             row.dataset.catIdx = catIdx;
             row.innerHTML = `
-                <i class="fa-solid fa-circle text-[6px] text-pink-300 ml-1"></i>
-                <input type="text" value="${taskName}" placeholder="子項目名稱" class="setting-task-name bg-white text-sm text-[#5d4037] border border-gray-200 rounded-lg px-3 py-1.5 flex-1 focus:outline-none focus:border-pink-400">
-                <button type="button" onclick="this.parentElement.remove()" class="text-gray-300 hover:text-red-400 p-1.5 rounded transition-colors" title="刪除子項目">
+                <i class="fa-solid fa-circle text-[6px] text-pink-400 ml-1"></i>
+                <input type="text" value="${taskName}" placeholder="子項目名稱" class="setting-task-name bg-white text-sm text-[#5d4037] border border-[#e0cbba] rounded-lg px-3 py-1.5 flex-1 focus:outline-none focus:border-pink-400 shadow-sm">
+                <button type="button" onclick="this.parentElement.remove()" class="text-stone-400 hover:text-red-500 p-1.5 rounded transition-colors" title="刪除子項目">
                     <i class="fa-solid fa-trash-can text-sm"></i>
                 </button>
             `;
@@ -646,22 +755,21 @@
             autoScheduleMode = true;
             autoBreakTime = breakMins;
 
-            // 改變主按鈕顏色與文字，作為視覺提示
+            // 改變主按鈕顏色與文字，維持水晶玻璃質感
             const btn = document.getElementById('auto-schedule-btn');
-            btn.className = 'px-4 py-2 rounded-full text-sm font-medium flex items-center transition-colors shadow-sm cursor-pointer border';
+            btn.className = 'crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center transition-all shadow-sm cursor-pointer border';
             
             if (breakMins === 5) {
-                btn.classList.add('bg-[#fce4ec]', 'text-[#d81b60]', 'border-pink-200', 'hover:bg-pink-200');
+                btn.classList.add('bg-pink-100/80', 'text-[#d81b60]', 'border-pink-200');
             } else if (breakMins === 10) {
-                btn.classList.add('bg-[#e1f5fe]', 'text-[#0288d1]', 'border-blue-200', 'hover:bg-blue-200');
+                btn.classList.add('bg-blue-100/80', 'text-[#0288d1]', 'border-blue-200');
             } else if (breakMins === 15) {
-                btn.classList.add('bg-[#ede7f6]', 'text-[#5e35b1]', 'border-purple-200', 'hover:bg-purple-200');
+                btn.classList.add('bg-purple-100/80', 'text-[#5e35b1]', 'border-purple-200');
             }
             
-            // 顯示選擇的分鐘數，不再閃爍，並保持顏色
-            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 自動排程 (${breakMins}分)`;
+            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles mr-2 text-pink-400"></i> 自動排程 (${breakMins}分)`;
 
-            toggleAutoScheduleMenu(); // 成功後關閉選單
+            toggleAutoScheduleMenu();
             showMessage(`<i class="fa-solid fa-wand-magic-sparkles mr-2"></i>已選擇休息 ${breakMins} 分鐘！<br><span class="text-sm mt-1 inline-block">👉 請設定任意任務的<strong class="text-pink-600">「開始時間」</strong>來觸發連鎖排程。</span>`, true);
         }
 
@@ -672,7 +780,6 @@
             
             autoScheduleMode = false;
             
-            // 攤平清理所有任務時間與鬧鐘
             for (let c = 0; c < courseData.length; c++) {
                 for (let t = 0; t < courseData[c].tasks.length; t++) {
                     courseData[c].tasks[t].startTime = '';
@@ -682,12 +789,12 @@
             }
             
             renderCourses();
-            toggleAutoScheduleMenu(); // 關閉選單
+            toggleAutoScheduleMenu();
             
-            // 恢復自動排程按鈕原本的外觀 (預設灰色狀態)
+            // 恢復自動排程按鈕原本的水晶玻璃外觀
             const btn = document.getElementById('auto-schedule-btn');
-            btn.className = 'glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-[#fff0f5] hover:text-pink-500 transition-colors shadow-sm cursor-pointer border border-transparent hover:border-pink-200';
-            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 自動排程';
+            btn.className = 'crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer';
+            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2 text-pink-400"></i> 自動排程';
 
             showMessage('<i class="fa-solid fa-eraser mr-2"></i>已取消排程並清除所有時間設定。');
         }
@@ -697,30 +804,25 @@
             initAudio();
             playClickSound();
 
-            // 1. 停止任何響鈴
             if (activeAlarmTask) {
                 clearInterval(beepInterval);
                 activeAlarmTask.isRinging = false;
                 activeAlarmTask = null;
             }
 
-            // 2. 停止滴答聲
             if (isTicking) {
                 toggleTicking(); 
             }
 
-            // 3. 還原自動排程按鈕狀態
             autoScheduleMode = false;
             const autoBtn = document.getElementById('auto-schedule-btn');
-            autoBtn.className = 'glass-panel px-4 py-2 rounded-full text-sm font-medium flex items-center text-gray-500 hover:bg-[#fff0f5] hover:text-pink-500 transition-colors shadow-sm cursor-pointer border border-transparent hover:border-pink-200';
-            autoBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 自動排程';
+            autoBtn.className = 'crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer';
+            autoBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2 text-pink-400"></i> 自動排程';
             
-            // 隱藏自動排程子選單
             const menu = document.getElementById('auto-schedule-menu');
             menu.classList.remove('flex');
             menu.classList.add('hidden');
 
-            // 4. 清除所有任務內容 (時間、鬧鐘、打勾狀態)
             courseData.forEach(category => {
                 category.tasks.forEach(task => {
                     task.startTime = '';
@@ -728,7 +830,7 @@
                     task.completed = false;
                     task.isAlarmActive = false;
                     task.isRinging = false;
-                    task.isSelected = true; // 新增：重置時將排程勾選狀態恢復
+                    task.isSelected = true;
                 });
             });
 
@@ -895,13 +997,17 @@
                     endTimeInput.type = 'time';
                     endTimeInput.className = `bg-transparent border-none outline-none font-medium px-1 text-sm w-full sm:w-auto transition-colors ${task.completed ? 'text-gray-400 cursor-not-allowed' : 'text-[#5d4037]'}`;
                     endTimeInput.value = task.endTime;
-                    endTimeInput.disabled = task.completed || task.isAlarmActive; // 鬧鐘依據結束時間，啟用時鎖定，完成時也鎖定
+                    endTimeInput.disabled = task.completed || task.isAlarmActive;
                     endTimeInput.onchange = (e) => updateTaskTime(catIndex, taskIndex, 'endTime', e.target.value);
                     endTimeGroup.appendChild(endTimeInput);
 
-                    // 鬧鐘切換按鈕
+                    // 鬧鐘切換按鈕 (按下啟用時呈現金屬質感的金色)
                     const alarmBtn = document.createElement('button');
-                    alarmBtn.className = `p-2 rounded-md transition-colors flex-shrink-0 ml-auto sm:ml-0 ${task.isAlarmActive ? 'bg-pink-100 text-pink-500' : 'text-gray-400 hover:bg-gray-100'} ${task.completed ? 'opacity-50 cursor-not-allowed' : ''}`;
+                    alarmBtn.className = `p-2 rounded-xl transition-all flex-shrink-0 ml-auto sm:ml-0 ${
+                        task.isAlarmActive 
+                            ? 'metallic-gold-alarm' 
+                            : 'crystal-btn text-gray-400 hover:text-amber-500'
+                    } ${task.completed ? 'opacity-50 cursor-not-allowed' : ''}`;
                     alarmBtn.disabled = task.completed;
                     alarmBtn.innerHTML = `<i class="fa-solid fa-bell${task.isAlarmActive ? ' ring-animation' : ''}"></i>`;
                     alarmBtn.onclick = () => toggleAlarm(catIndex, taskIndex);
@@ -909,7 +1015,7 @@
                     if(!task.endTime && !task.isAlarmActive) {
                         alarmBtn.title = "請先設定結束時間";
                     } else if (task.isAlarmActive) {
-                         alarmBtn.title = "點擊取消鬧鐘";
+                         alarmBtn.title = "點擊取消鬧鐘 (已啟用金色提醒)";
                     } else {
                          alarmBtn.title = "點擊開啟鬧鐘 (依據結束時間)";
                     }
