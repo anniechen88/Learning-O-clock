@@ -211,8 +211,8 @@
         
         <!-- 音效控制面板 (水晶玻璃質感) -->
         <div class="mt-5 flex flex-wrap justify-center gap-3 w-full">
-            <button id="voice-btn" onclick="toggleVoice()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
-                <i class="fa-solid fa-volume-high mr-2 text-pink-400"></i> 語音提醒: 開
+            <button id="voice-btn" onclick="toggleVoice()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer transition-all">
+                <i class="fa-solid fa-volume-xmark mr-2 text-gray-400"></i> 語音提醒: 關
             </button>
             <button id="auto-schedule-btn" onclick="toggleAutoScheduleMenu()" class="crystal-btn px-4 py-2 rounded-full text-sm font-medium flex items-center text-[#795548] hover:text-pink-500 shadow-sm cursor-pointer">
                 <i class="fa-solid fa-wand-magic-sparkles mr-2 text-pink-400"></i> 自動排程
@@ -342,34 +342,143 @@
         let beepInterval;
         let isTicking = false;
         let tickInterval;
-        let isVoiceEnabled = true;
+        let isVoiceEnabled = false;
 
-        // 初始化語音清單
+        // 智慧作業系統與裝置偵測 (Device & OS Detection)
+        function detectDeviceOS() {
+            const ua = navigator.userAgent || '';
+            const platform = navigator.platform || '';
+            
+            // 偵測 iOS (iPhone, iPad, iPod 及 iPadOS 模擬 MacIntel)
+            const isIOS = /iPhone|iPad|iPod/i.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            // 偵測 macOS 電腦
+            const isMac = !isIOS && (/Macintosh|Mac OS X/i.test(ua) || platform.startsWith('Mac'));
+            // 偵測 Windows 電腦
+            const isWindows = /Windows|Win32|Win64|WOW64/i.test(ua);
+            // 偵測 Android 手機與平板
+            const isAndroid = /Android/i.test(ua);
+
+            if (isIOS) return { os: 'ios', label: 'iPhone / iPad', tag: 'Apple Siri' };
+            if (isMac) return { os: 'mac', label: 'Mac 電腦', tag: 'Apple Siri' };
+            if (isWindows) return { os: 'windows', label: 'Windows 電腦', tag: 'Windows 自然發音' };
+            if (isAndroid) return { os: 'android', label: 'Android 裝置', tag: 'Android 原生' };
+            return { os: 'other', label: '智慧裝置', tag: '系統語音' };
+        }
+
+        // 智慧過濾並取得最適合當前裝置的繁體中文原生語音
+        function getBestVoiceForDevice() {
+            if (!('speechSynthesis' in window)) return null;
+            const voices = window.speechSynthesis.getVoices() || [];
+            const device = detectDeviceOS();
+            if (voices.length === 0) return { voice: null, desc: device.tag, device };
+
+            let selectedVoice = null;
+            let voiceDesc = device.tag;
+
+            const isZhTW = (v) => {
+                const lang = (v.lang || '').replace('_', '-').toLowerCase();
+                return lang === 'zh-tw' || lang === 'cmn-tw' || lang.includes('tw');
+            };
+            const isZh = (v) => {
+                const lang = (v.lang || '').replace('_', '-').toLowerCase();
+                return lang.startsWith('zh') || lang.startsWith('cmn');
+            };
+
+            // 1. Apple (Mac / iPhone / iPad): 優先媒合 Siri 或 Mei-Jia 等 Apple 繁體中文原生發音
+            if (device.os === 'ios' || device.os === 'mac') {
+                selectedVoice = voices.find(v => (v.name.includes('Siri') || v.name.includes('Mei-Jia') || v.name.includes('Sin-Ji')) && isZh(v)) ||
+                                voices.find(v => v.name.includes('Siri')) ||
+                                voices.find(v => isZhTW(v) && (v.name.includes('Apple') || v.localService)) ||
+                                voices.find(v => isZhTW(v)) ||
+                                voices.find(v => isZh(v));
+                voiceDesc = selectedVoice?.name?.includes('Siri') ? 'Siri 語音' : 'Apple 原生語音';
+            } 
+            // 2. Windows PC: 優先推薦 Microsoft Online Natural 自然發音（如 HsiaoChen, YunJhe）或 Windows 繁體語音
+            else if (device.os === 'windows') {
+                selectedVoice = voices.find(v => v.name.includes('Natural') && (isZhTW(v) || v.name.includes('HsiaoChen') || v.name.includes('YunJhe') || v.name.includes('HsiaoYu'))) ||
+                                voices.find(v => v.name.includes('Microsoft') && isZhTW(v)) ||
+                                voices.find(v => isZhTW(v) && (v.name.includes('HsiaoChen') || v.name.includes('Yating') || v.name.includes('Hanhan'))) ||
+                                voices.find(v => isZhTW(v)) ||
+                                voices.find(v => v.name.includes('Microsoft') && isZh(v)) ||
+                                voices.find(v => isZh(v));
+                voiceDesc = selectedVoice?.name?.includes('Natural') ? '微軟自然發音' : 'Windows 原生語音';
+            } 
+            // 3. Android: 依設備預設 Google 國語（台灣）或原生語音
+            else if (device.os === 'android') {
+                selectedVoice = voices.find(v => (v.name.includes('Google') || v.name.includes('國語') || v.name.includes('台灣')) && isZhTW(v)) ||
+                                voices.find(v => isZhTW(v)) ||
+                                voices.find(v => isZh(v));
+                voiceDesc = 'Android 原生語音';
+            } 
+            // 4. 其他設備回退機制
+            else {
+                selectedVoice = voices.find(v => isZhTW(v)) || voices.find(v => isZh(v));
+                voiceDesc = '系統預設語音';
+            }
+
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => isZh(v)) || voices[0];
+            }
+
+            return { voice: selectedVoice, desc: voiceDesc, device };
+        }
+
+        // 更新語音按鈕上的系統識別標籤
+        function updateVoiceButtonUI() {
+            const btn = document.getElementById('voice-btn');
+            if (!btn) return;
+            const voiceInfo = getBestVoiceForDevice();
+            const tagText = voiceInfo ? voiceInfo.desc : '智慧語音';
+            
+            if (isVoiceEnabled) {
+                btn.innerHTML = `<i class="fa-solid fa-volume-high mr-2 text-pink-400"></i> 語音提醒: 開 <span class="ml-1.5 text-[11px] px-2 py-0.5 rounded-full bg-pink-100/90 text-pink-600 font-normal border border-pink-200/80 shadow-xs">${tagText}</span>`;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-volume-xmark mr-2 text-gray-400"></i> 語音提醒: 關`;
+            }
+        }
+
+        // 初始化語音清單並綁定動態載入監聽
         if ('speechSynthesis' in window) {
             window.speechSynthesis.onvoiceschanged = () => {
                 window.speechSynthesis.getVoices();
+                updateVoiceButtonUI();
             };
         }
 
-        // 語音播報功能 (原生 Web Speech Synthesis，無延遲零依賴)
+        // 智慧語音播報功能 (原生 Web Speech Synthesis，依裝置客製化調校)
         function speakText(text) {
             if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
             try {
-                window.speechSynthesis.cancel(); // 停止前一段發音
+                window.speechSynthesis.cancel(); // 停止前一段發音，確保發音無延遲
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'zh-TW';
-                utterance.rate = 0.92; // 沉穩親切的語速
-                utterance.pitch = 1.05; // 稍微輕快自然的聲調
-                
-                const voices = window.speechSynthesis.getVoices();
-                const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.includes('TW')) || 
-                                voices.find(v => v.lang.startsWith('zh') || v.lang.includes('cmn'));
-                if (zhVoice) {
-                    utterance.voice = zhVoice;
+
+                const voiceInfo = getBestVoiceForDevice();
+                if (voiceInfo && voiceInfo.voice) {
+                    utterance.voice = voiceInfo.voice;
+                    
+                    // 依不同作業系統調校最親切清晰的語速與音調
+                    if (voiceInfo.device.os === 'ios' || voiceInfo.device.os === 'mac') {
+                        utterance.rate = 0.95; // Siri 語速自然微放慢，清晰親切
+                        utterance.pitch = 1.0;
+                    } else if (voiceInfo.device.os === 'windows') {
+                        utterance.rate = 1.0;  // 微軟自然發音已為高傳真調校，1.0 最為流暢好聽
+                        utterance.pitch = 1.0;
+                    } else if (voiceInfo.device.os === 'android') {
+                        utterance.rate = 0.92; // Android Google 語音語速稍放緩
+                        utterance.pitch = 1.02;
+                    } else {
+                        utterance.rate = 0.95;
+                        utterance.pitch = 1.0;
+                    }
+                } else {
+                    utterance.rate = 0.95;
+                    utterance.pitch = 1.0;
                 }
+
                 window.speechSynthesis.speak(utterance);
             } catch (e) {
-                console.error("語音提醒播放失敗:", e);
+                console.error("智慧語音提醒播放失敗:", e);
             }
         }
 
@@ -379,14 +488,18 @@
             playClickSound();
             isVoiceEnabled = !isVoiceEnabled;
             const btn = document.getElementById('voice-btn');
+            
             if (isVoiceEnabled) {
                 btn.classList.add('text-pink-600');
-                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-2 text-pink-400"></i> 語音提醒: 開';
-                showMessage('<i class="fa-solid fa-volume-high mr-2"></i>語音提醒已開啟！', true);
+                updateVoiceButtonUI();
+                const voiceInfo = getBestVoiceForDevice();
+                const osName = voiceInfo?.device?.label || '當前設備';
+                const voiceName = voiceInfo?.desc || '智慧語音';
+                showMessage(`<i class="fa-solid fa-volume-high mr-2"></i>語音提醒已開啟（辨識為 <strong>${osName}</strong>，已配對 <strong>${voiceName}</strong>）！`, true);
                 speakText("語音提醒已開啟");
             } else {
                 btn.classList.remove('text-pink-600');
-                btn.innerHTML = '<i class="fa-solid fa-volume-xmark mr-2 text-gray-400"></i> 語音提醒: 關';
+                updateVoiceButtonUI();
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
                 showMessage('<i class="fa-solid fa-volume-xmark mr-2"></i>語音提醒已關閉。');
             }
@@ -546,8 +659,12 @@
                 playDoubleBeep(); // 模擬鬧鐘音效
             }, 1000);
 
-            // 測試語音播報
+            // 測試智慧語音播報（依裝置推薦發音）
             setTimeout(() => {
+                const voiceInfo = getBestVoiceForDevice();
+                const osName = voiceInfo?.device?.label || '系統';
+                const voiceDesc = voiceInfo?.desc || '原生發音';
+                showMessage(`<i class="fa-solid fa-headphones mr-2 text-pink-500"></i>【${osName}・${voiceDesc}】正在示範語音提醒...`, true);
                 speakText("時間到，請開始學習肯定句英文 Speak。學習時間結束，請休息。");
             }, 1800);
         }
@@ -1451,6 +1568,7 @@
         window.onload = () => {
             renderCourses();
             updateClockAndCheckAlarms();
+            updateVoiceButtonUI();
             setInterval(updateClockAndCheckAlarms, 1000); // 每秒更新時間
         };
 
